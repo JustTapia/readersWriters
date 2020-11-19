@@ -7,6 +7,7 @@
 #include <pthread.h> 
 #include <time.h>
 
+
 typedef struct message
 {
       int pid;
@@ -20,43 +21,56 @@ typedef struct shm_content
       int cant_lineas;
 }shm_content;
 
+pthread_mutex_t    *mlector;
+pthread_mutexattr_t matr;
+
 pthread_mutex_t    *mptr; 
-int cant_lineas;
-int durmiendo;
-int escribiendo;
-void *archivo;
 
 int messageSize;
+int readcount = 0;
+int cant_lineas;
+int durmiendo;
+int leyendo;
+void *archivo;
 
-
-void *escribir(void *vargp){
+void *leer(void *vargp){
 
 	int *pid = (int *)vargp;
 	message mensaje;
-
+	int i = 0;
 
 	while(1){
-		pthread_mutex_lock(mptr);
-		int i = 0;
+		pthread_mutex_lock(mlector);
+		readcount++;
+		if(readcount==1){
+			pthread_mutex_lock(mptr);
+		}
+		pthread_mutex_unlock(mlector);	
+
 		message *pMensaje;
 		while(i<cant_lineas){
 			pMensaje = (archivo+(i*messageSize));
-			if(pMensaje->pid==0) break;
+			if(pMensaje->pid!=0) break;
 			i++;
 		}
 		if(i!=cant_lineas){
-			pMensaje->pid = *pid;
-			pMensaje->fechaHora = time(0);
-			pMensaje->linea = i;
-			printf(" PID: %d\n", pMensaje->pid);
-			printf("\n");
-			fflush(stdout);
-			sleep(escribiendo);
+			sleep(leyendo);
+			printf(" PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
+			fflush(stdout);	
+		}
+		pthread_mutex_lock(mlector);
+		readcount--;
+		if(readcount==0){
 			pthread_mutex_unlock(mptr);
-			sleep(durmiendo);
-		}else{
-			pthread_mutex_unlock(mptr);
-		} 
+		}
+		pthread_mutex_unlock(mlector);
+
+		sleep(durmiendo);
+
+		i++;
+		if(i==cant_lineas){
+			i=0;
+		}
 	}
 
 }
@@ -65,18 +79,18 @@ int main(){
 	int shmid, shmidMutex;
 	key_t key, keyMutex;
 	char *shm, *s;
-	int nEscritores = 0;
+	int nLectores = 0;
 	int tiempoDurmiendo = 0;
-	int tiempoEscribiendo = 0;
+	int tiempoLeyendo = 0;
 
 	messageSize = sizeof(message);
 
 	printf("Digite la cantidad de lectores");
-    scanf("%d", &nEscritores);
+    scanf("%d", &nLectores);
 
     printf("Digite el tiempo que duraran escribiendo");
-    scanf("%d", &tiempoEscribiendo);
-    escribiendo = tiempoEscribiendo;
+    scanf("%d", &tiempoLeyendo);
+    leyendo = tiempoLeyendo;
 
     printf("Digite el tiempo que dormiran");
     scanf("%d", &tiempoDurmiendo);
@@ -99,19 +113,38 @@ int main(){
 		exit(1);
 	}
 
+	int rtn;
+
+	mlector =(pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+
+	if (rtn = pthread_mutexattr_init(&matr))
+    {
+        fprintf(stderr,"pthreas_mutexattr_init: %s",strerror(rtn)),exit(1);
+    }
+    if (rtn = pthread_mutexattr_setpshared(&matr,PTHREAD_PROCESS_SHARED))
+    {
+        fprintf(stderr,"pthread_mutexattr_setpshared %s",strerror(rtn)),exit(1);
+    }
+
+    if (rtn = pthread_mutex_init(mlector, &matr))
+    {
+        fprintf(stderr,"pthread_mutex_init %s",strerror(rtn)), exit(1);
+    }
+
 	archivo = shmat(shmid, NULL,0);
 
+
 	int i = 0;
-	pthread_t thread_id[nEscritores]; 
-	while(i < nEscritores){
+	pthread_t thread_id[nLectores]; 
+	while(i < nLectores){
 		int *pid = (int*) malloc(sizeof(int));
 		*pid = i+1;
-		pthread_create(&thread_id[i], NULL,  escribir, (void *)pid);
+		pthread_create(&thread_id[i], NULL,  leer, (void *)pid);
 		i++;
 	}
 
 	i=0;
-	while(i < nEscritores){
+	while(i < nLectores){
 		pthread_join(thread_id[i], NULL);
 		i++;
 	}
