@@ -17,13 +17,11 @@ typedef struct message
 typedef struct shm_content
 {
       pthread_mutex_t   mutex;
+      int cant_lineas;
 }shm_content;
 
 pthread_mutex_t    *mptr; //Mutex Pointer
 pthread_mutexattr_t matr; //Mutex Attribute
-
-int   shared_mem_id;      //shared memory Id
-int   *mp_shared_mem_ptr;
 
 
 int main(){
@@ -65,6 +63,8 @@ int main(){
     printf("Digite la cantidad de lineas del archivo");
     scanf("%d", &nLineas);
     int tamano = messageSize*nLineas;
+    pMutex->cant_lineas = nLineas;
+    
     printf("%d",tamano);
     fflush(stdout);
     key = 4321; 
@@ -74,16 +74,15 @@ int main(){
 		perror("shmget");
 		exit(1);
 	}
-	struct shmid_ds shmbuffer; 
-
 	
-	int i = 0;
 	void *pInicio = shmat(shmid, NULL,0);
-	if(pInicio==-1){ 
+	if(pInicio== (void *)-1){ 
 		perror("shmat");
 		exit(1);}
+	
+	/*
+	int i = 0;
 	while(i < nLineas){
-		printf("%d\n",i);
 		message *pValor = (pInicio+(i*messageSize));
 		pValor->pid = i;	
 		i++;
@@ -94,6 +93,6 @@ int main(){
 		message *pValor = (pInicio+(i*messageSize));
 		printf("%d\n", pValor->pid);
 		i++;
-	}
+	}*/
 
 }
