@@ -18,6 +18,7 @@ typedef struct shm_content
 {
       pthread_mutex_t   mutex;
       int cant_lineas;
+      int contador_egoista;
 }shm_content;
 
 pthread_mutex_t    *mptr; 
@@ -27,6 +28,7 @@ int escribiendo;
 void *archivo;
 
 int messageSize;
+struct shm_content *pMutex;
 
 
 void *escribir(void *vargp){
@@ -37,6 +39,8 @@ void *escribir(void *vargp){
 
 	while(1){
 		pthread_mutex_lock(mptr);
+		pMutex->contador_egoista = 0;
+
 		int i = 0;
 		message *pMensaje;
 		while(i<cant_lineas){
@@ -71,7 +75,7 @@ int main(){
 
 	messageSize = sizeof(message);
 
-	printf("Digite la cantidad de lectores");
+	printf("Digite la cantidad de escritores");
     scanf("%d", &nEscritores);
 
     printf("Digite el tiempo que duraran escribiendo");
@@ -88,7 +92,7 @@ int main(){
 		perror("shmget");
 		exit(1);
 	}
-	struct shm_content *pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
+	pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
 	mptr = &(pMutex->mutex);
 	cant_lineas = pMutex->cant_lineas;
 

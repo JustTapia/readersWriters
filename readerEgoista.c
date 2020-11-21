@@ -15,12 +15,15 @@ typedef struct message
       int linea;
 } message;
 
+
 typedef struct shm_content
 {
       pthread_mutex_t   mutex;
       int cant_lineas;
       int contador_egoista;
+
 }shm_content;
+
 
 pthread_mutex_t    *mlector;
 pthread_mutexattr_t matr;
@@ -32,51 +35,45 @@ int readcount = 0;
 int cant_lineas;
 int durmiendo;
 int leyendo;
+int *cont_egoista;
 void *archivo;
-struct shm_content *pMutex;
 
-void *leer(void *vargp){
+
+void *leerEgoista(void *vargp){
 
 	int *pid = (int *)vargp;
 	message mensaje;
 	int i = 0;
 
 	while(1){
-		pthread_mutex_lock(mlector);
-		readcount++;
-		if(readcount==1){
-			pthread_mutex_lock(mptr);
-			pMutex->contador_egoista = 0;
-		}
-		pthread_mutex_unlock(mlector);
 
-		message *pMensaje;
-		while(i<cant_lineas){
-			pMensaje = (archivo+(i*messageSize));
-			if(pMensaje->pid!=0) break;
-			i++;
+		pthread_mutex_lock(mptr);
+		*cont_egoista++;
+		if(*cont_egoista <= 3){
+			int linea = rand() % cant_lineas;
+			message *pMensaje = (archivo+(linea*messageSize));
+
+			if(pMensaje->pid!=0){
+				sleep(leyendo);
+				printf(" PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
+				fflush(stdout);
+				pMensaje->pid = 0;
+				pMensaje->fechaHora = 0;
+				pMensaje->linea = 0;
+			}else{
+				printf("Turno perdido :(\n");
+			}
+
 		}
-		if(i!=cant_lineas){
-			sleep(leyendo);
-			printf(" PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
-			fflush(stdout);	
-		}
-		pthread_mutex_lock(mlector);
-		readcount--;
-		if(readcount==0){
-			pthread_mutex_unlock(mptr);
-		}
-		pthread_mutex_unlock(mlector);
+
+		pthread_mutex_unlock(mptr);
 
 		sleep(durmiendo);
-
-		i++;
-		if(i==cant_lineas){
-			i=0;
-		}
 	}
 
 }
+
+
 
 int main(){
 	int shmid, shmidMutex;
@@ -105,9 +102,10 @@ int main(){
 		perror("shmget");
 		exit(1);
 	}
-	pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
+	struct shm_content *pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
 	mptr = &(pMutex->mutex);
 	cant_lineas = pMutex->cant_lineas;
+	cont_egoista = &(pMutex->contador_egoista);
 
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
@@ -134,15 +132,16 @@ int main(){
         fprintf(stderr,"pthread_mutex_init %s",strerror(rtn)), exit(1);
     }
 
-	archivo = shmat(shmid, NULL,0);
 
+
+	archivo = shmat(shmid, NULL,0);
 
 	int i = 0;
 	pthread_t thread_id[nLectores]; 
 	while(i < nLectores){
 		int *pid = (int*) malloc(sizeof(int));
 		*pid = i+1;
-		pthread_create(&thread_id[i], NULL,  leer, (void *)pid);
+		pthread_create(&thread_id[i], NULL,  leerEgoista, (void *)pid);
 		i++;
 	}
 
@@ -152,10 +151,10 @@ int main(){
 		i++;
 	}
 
-	/*i = 0;
+	i = 0;
 	char MY_TIME[50];
 
-	while(i < cant_lineas){
+	/*while(i < cant_lineas){
 		message *pValor = (archivo+(i*messageSize));
 		printf(" PID: %d\n", pValor->pid);
 		printf("Fecha y Hora: %s", asctime(gmtime(&(pValor->fechaHora))));
@@ -165,3 +164,5 @@ int main(){
 	}*/
 
 }
+
+
