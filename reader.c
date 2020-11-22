@@ -20,6 +20,9 @@ typedef struct shm_content
       pthread_mutex_t   mutex;
       int cant_lineas;
       int contador_egoista;
+      int cant_writers;
+      int cant_readers;
+      int cant_readersEgoista;
 }shm_content;
 
 pthread_mutex_t    *mlector;
@@ -32,6 +35,7 @@ int readcount = 0;
 int cant_lineas;
 int durmiendo;
 int leyendo;
+int *estados;
 void *archivo;
 struct shm_content *pMutex;
 
@@ -42,13 +46,16 @@ void *leer(void *vargp){
 	int i = 0;
 
 	while(1){
+		estados[*(pid)-1] = 0;
 		pthread_mutex_lock(mlector);
+
 		readcount++;
 		if(readcount==1){
 			pthread_mutex_lock(mptr);
 			pMutex->contador_egoista = 0;
 		}
 		pthread_mutex_unlock(mlector);
+		estados[*(pid)-1] = 1;
 
 		message *pMensaje;
 		while(i<cant_lineas){
@@ -67,7 +74,7 @@ void *leer(void *vargp){
 			pthread_mutex_unlock(mptr);
 		}
 		pthread_mutex_unlock(mlector);
-
+		estados[*(pid)-1] = 2;
 		sleep(durmiendo);
 
 		i++;
@@ -79,8 +86,8 @@ void *leer(void *vargp){
 }
 
 int main(){
-	int shmid, shmidMutex;
-	key_t key, keyMutex;
+	int shmid, shmidMutex, shmidEstado;
+	key_t key, keyMutex, keyEstado;
 	char *shm, *s;
 	int nLectores = 0;
 	int tiempoDurmiendo = 0;
@@ -91,7 +98,7 @@ int main(){
 	printf("Digite la cantidad de lectores");
     scanf("%d", &nLectores);
 
-    printf("Digite el tiempo que duraran escribiendo");
+    printf("Digite el tiempo que duraran leyendo");
     scanf("%d", &tiempoLeyendo);
     leyendo = tiempoLeyendo;
 
@@ -108,6 +115,7 @@ int main(){
 	pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
 	mptr = &(pMutex->mutex);
 	cant_lineas = pMutex->cant_lineas;
+	pMutex->cant_readers = nLectores;
 
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
@@ -136,7 +144,18 @@ int main(){
 
 	archivo = shmat(shmid, NULL,0);
 
+	//Array de estados-----------------------------------------------------------------------------
+	keyEstado=4587;
+	int arrayEstados[nLectores];
+	if ((shmidEstado = shmget(keyEstado, sizeof(arrayEstados), IPC_CREAT | 0666)) < 0) {
+		perror("shmget");
+		exit(1);
+	}
 
+	estados = shmat(shmidEstado, NULL,0);
+
+
+	//Inicio de Threads--------------------------------------------------------------------------------
 	int i = 0;
 	pthread_t thread_id[nLectores]; 
 	while(i < nLectores){

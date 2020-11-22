@@ -19,6 +19,9 @@ typedef struct shm_content
       pthread_mutex_t   mutex;
       int cant_lineas;
       int contador_egoista;
+      int cant_writers;
+      int cant_readers;
+      int cant_readersEgoista;
 }shm_content;
 
 pthread_mutex_t    *mptr; //Mutex Pointer
@@ -32,7 +35,10 @@ int main(){
 	
 	int shmidMutex, shmid;
 	key_t keyMutex, key;
-	
+
+	printf("Digite la cantidad de lineas del archivo: ");
+    scanf("%d", &nLineas);
+
 	keyMutex = 5678; 
 	system("ipcrm -M 5678");
 	// Create the segment.
@@ -61,16 +67,15 @@ int main(){
     }
 
     int messageSize = sizeof(message);
-    printf("Digite la cantidad de lineas del archivo");
-    scanf("%d", &nLineas);
+    
     int tamano = messageSize*nLineas;
     pMutex->cant_lineas = nLineas;
     pMutex->contador_egoista = 0;
-    
-    printf("%d",tamano);
-    fflush(stdout);
     key = 4321; 
     system("ipcrm -M 4321");
+    system("ipcrm -M 8745");
+    system("ipcrm -M 4587");
+    system("ipcrm -M 7854");
 	// Create the segment.
 	if ((shmid = shmget(key, tamano, IPC_CREAT|0666)) < 0) {
 		perror("shmget");

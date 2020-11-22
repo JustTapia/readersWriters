@@ -21,7 +21,9 @@ typedef struct shm_content
       pthread_mutex_t   mutex;
       int cant_lineas;
       int contador_egoista;
-
+      int cant_writers;
+      int cant_readers;
+      int cant_readersEgoista;
 }shm_content;
 
 
@@ -36,6 +38,7 @@ int cant_lineas;
 int durmiendo;
 int leyendo;
 int *cont_egoista;
+int *estados;
 void *archivo;
 
 
@@ -46,14 +49,16 @@ void *leerEgoista(void *vargp){
 	int i = 0;
 
 	while(1){
-
+		estados[*(pid)-1]=0;
 		pthread_mutex_lock(mptr);
 		*cont_egoista++;
 		if(*cont_egoista <= 3){
+			estados[*(pid)-1]=1;
 			int linea = rand() % cant_lineas;
 			message *pMensaje = (archivo+(linea*messageSize));
 
 			if(pMensaje->pid!=0){
+
 				sleep(leyendo);
 				printf(" PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
 				fflush(stdout);
@@ -61,13 +66,13 @@ void *leerEgoista(void *vargp){
 				pMensaje->fechaHora = 0;
 				pMensaje->linea = 0;
 			}else{
-				printf("Turno perdido :(\n");
+				printf("Turno perdido, linea al azar vacía :(\n");
 			}
 
 		}
 
 		pthread_mutex_unlock(mptr);
-
+		estados[*(pid)-1]=2;
 		sleep(durmiendo);
 	}
 
@@ -76,8 +81,8 @@ void *leerEgoista(void *vargp){
 
 
 int main(){
-	int shmid, shmidMutex;
-	key_t key, keyMutex;
+	int shmid, shmidMutex, shmidEstado;
+	key_t key, keyMutex, keyEstado;
 	char *shm, *s;
 	int nLectores = 0;
 	int tiempoDurmiendo = 0;
@@ -88,7 +93,7 @@ int main(){
 	printf("Digite la cantidad de lectores");
     scanf("%d", &nLectores);
 
-    printf("Digite el tiempo que duraran escribiendo");
+    printf("Digite el tiempo que duraran leyendo");
     scanf("%d", &tiempoLeyendo);
     leyendo = tiempoLeyendo;
 
@@ -106,6 +111,7 @@ int main(){
 	mptr = &(pMutex->mutex);
 	cant_lineas = pMutex->cant_lineas;
 	cont_egoista = &(pMutex->contador_egoista);
+	pMutex->cant_readersEgoista = nLectores;
 
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
@@ -135,6 +141,16 @@ int main(){
 
 
 	archivo = shmat(shmid, NULL,0);
+
+	keyEstado=7854;
+	int arrayEstados[nLectores];
+	if ((shmidEstado = shmget(keyEstado, sizeof(arrayEstados), IPC_CREAT | 0666)) < 0) {
+		perror("shmget");
+		exit(1);
+	}
+
+	estados = shmat(shmidEstado, NULL,0);
+
 
 	int i = 0;
 	pthread_t thread_id[nLectores]; 
