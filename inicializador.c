@@ -18,6 +18,7 @@ typedef struct shm_content
 {
       pthread_mutex_t   mutex;
       int cant_lineas;
+      int contador_egoista;
 }shm_content;
 
 pthread_mutex_t    *mptr; //Mutex Pointer
@@ -64,6 +65,7 @@ int main(){
     scanf("%d", &nLineas);
     int tamano = messageSize*nLineas;
     pMutex->cant_lineas = nLineas;
+    pMutex->contador_egoista = 0;
     
     printf("%d",tamano);
     fflush(stdout);
