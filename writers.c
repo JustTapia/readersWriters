@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pthread.h> 
 #include <time.h>
+#include <limits.h>
 
 typedef struct message
 {
@@ -22,6 +23,10 @@ typedef struct shm_content
       int cant_writers;
       int cant_readers;
       int cant_readersEgoista;
+      pid_t pid_writer;
+      pid_t pid_reader;
+      pid_t pid_readerEgoista;
+      char cwd[PATH_MAX];
 }shm_content;
 
 pthread_mutex_t    *mptr; 
@@ -30,9 +35,11 @@ int durmiendo;
 int escribiendo;
 void *archivo;
 int *estados;
+FILE *fptr;
 
 int messageSize;
 struct shm_content *pMutex;
+char *cwd;
 
 
 void *escribir(void *vargp){
@@ -57,9 +64,23 @@ void *escribir(void *vargp){
 			pMensaje->pid = *pid;
 			pMensaje->fechaHora = time(0);
 			pMensaje->linea = i;
-			printf(" PID: %d\n", pMensaje->pid);
+			printf("Proceso Writer\n");
+			printf("Mensaje que escribio:\n");
+			printf("PID: %d\n", pMensaje->pid);
+			printf("Fecha y Hora: %s", ctime(&(pMensaje->fechaHora)));
+			printf("Linea: %d\n", pMensaje->linea);
 			printf("\n");
 			fflush(stdout);
+
+			fptr = fopen(cwd,"a");
+			fprintf(fptr,"%s", "Proceso Writer\n");
+			fprintf(fptr, "Mensaje que escribio:\n");
+			fprintf(fptr, "PID: %d\n", pMensaje->pid);
+			fprintf(fptr,"Fecha y Hora: %s", ctime(&(pMensaje->fechaHora)));
+			fprintf(fptr, "Linea: %d\n", pMensaje->linea);
+			fprintf(fptr, "\n");
+   			fclose(fptr);
+
 			pthread_mutex_unlock(mptr);
 			estados[*(pid)-1] = 2;
 			sleep(durmiendo);
@@ -102,6 +123,8 @@ int main(){
 	mptr = &(pMutex->mutex);
 	cant_lineas = pMutex->cant_lineas;
 	pMutex->cant_writers = nEscritores;
+	pMutex->pid_writer = getpid();
+	cwd = pMutex->cwd;
 
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
@@ -132,10 +155,6 @@ int main(){
 		pthread_create(&thread_id[i], NULL,  escribir, (void *)pid);
 		i++;
 	}
-
-	
-
-
 
 	i=0;
 	while(i < nEscritores){

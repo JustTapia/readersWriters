@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pthread.h> 
 #include <time.h>
+#include <limits.h>
 
 
 typedef struct message
@@ -24,6 +25,10 @@ typedef struct shm_content
       int cant_writers;
       int cant_readers;
       int cant_readersEgoista;
+      pid_t pid_writer;
+      pid_t pid_reader;
+      pid_t pid_readerEgoista;
+      char cwd[PATH_MAX];
 }shm_content;
 
 
@@ -40,6 +45,8 @@ int leyendo;
 int *cont_egoista;
 int *estados;
 void *archivo;
+FILE *fptr;
+char *cwd;
 
 
 void *leerEgoista(void *vargp){
@@ -60,13 +67,38 @@ void *leerEgoista(void *vargp){
 			if(pMensaje->pid!=0){
 
 				sleep(leyendo);
+				time_t hora = time(0);
+				printf("Proceso Reader Egoista\n");
+				printf("PID del proceso: %d\n", *pid);
+				printf("Hora en que leyo: %s", ctime(&(hora)));
+				printf("Mensaje:\n");
 				printf(" PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
 				fflush(stdout);
+
+				fptr = fopen(cwd,"a");
+				fprintf(fptr,"%s", "Proceso Reader Egoista\n");
+				fprintf(fptr,"PID del proceso: %d\n", *pid);
+				fprintf(fptr,"Hora en que leyo: %s", ctime(&(hora)));
+				fprintf(fptr,"Mensaje que leyo:\n");
+				fprintf(fptr,"PID: %d\nFecha y Hora: %sLinea: %d\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
+				fprintf(fptr, "\n");
+   				fclose(fptr);
+
 				pMensaje->pid = 0;
 				pMensaje->fechaHora = 0;
 				pMensaje->linea = 0;
 			}else{
+				printf("Proceso Reader Egoista\n");
+				printf("PID del proceso: %d\n", *pid);
 				printf("Turno perdido, linea al azar vacía :(\n");
+
+				fptr = fopen(cwd,"a");
+				fprintf(fptr,"%s", "Proceso Reader Egoista\n");
+				fprintf(fptr,"PID del proceso: %d\n", *pid);
+				fprintf(fptr, "Turno perdido, linea al azar vacía :(\n");
+				fprintf(fptr, "\n");
+   				fclose(fptr);
+
 			}
 
 		}
@@ -112,6 +144,8 @@ int main(){
 	cant_lineas = pMutex->cant_lineas;
 	cont_egoista = &(pMutex->contador_egoista);
 	pMutex->cant_readersEgoista = nLectores;
+	pMutex->pid_readerEgoista = getpid();
+	cwd = pMutex->cwd;
 
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 

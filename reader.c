@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pthread.h> 
 #include <time.h>
+#include <limits.h>
 
 
 typedef struct message
@@ -23,10 +24,17 @@ typedef struct shm_content
       int cant_writers;
       int cant_readers;
       int cant_readersEgoista;
+      pid_t pid_writer;
+      pid_t pid_reader;
+      pid_t pid_readerEgoista;
+      char cwd[PATH_MAX];
 }shm_content;
 
 pthread_mutex_t    *mlector;
 pthread_mutexattr_t matr;
+
+pthread_mutex_t    *mArchivo;
+pthread_mutexattr_t matrArchivo;
 
 pthread_mutex_t    *mptr; 
 
@@ -38,6 +46,8 @@ int leyendo;
 int *estados;
 void *archivo;
 struct shm_content *pMutex;
+FILE *fptr;
+char *cwd;
 
 void *leer(void *vargp){
 
@@ -65,8 +75,27 @@ void *leer(void *vargp){
 		}
 		if(i!=cant_lineas){
 			sleep(leyendo);
+			time_t hora = time(0);
+			printf("Proceso Reader\n");
+			printf("PID del proceso: %d\n", *pid);
+			printf("Hora en que leyo: %s", ctime(&(hora)));
+			printf("Mensaje:\n");
 			printf(" PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
 			fflush(stdout);	
+			
+			pthread_mutex_lock(mArchivo);
+
+			fptr = fopen(cwd,"a");
+			fprintf(fptr, "Proceso Reader\n");
+			fprintf(fptr, "PID del proceso: %d\n", *pid);
+			fprintf(fptr, "Hora en que leyo: %s", ctime(&(hora)));
+			fprintf(fptr, "Mensaje:\n");
+			fprintf(fptr, "PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
+			fprintf(fptr, "\n");
+   			fclose(fptr);
+
+			pthread_mutex_unlock(mArchivo);
+
 		}
 		pthread_mutex_lock(mlector);
 		readcount--;
@@ -116,6 +145,8 @@ int main(){
 	mptr = &(pMutex->mutex);
 	cant_lineas = pMutex->cant_lineas;
 	pMutex->cant_readers = nLectores;
+	pMutex->pid_reader = getpid();
+	cwd = pMutex->cwd;
 
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
@@ -140,6 +171,24 @@ int main(){
     if (rtn = pthread_mutex_init(mlector, &matr))
     {
         fprintf(stderr,"pthread_mutex_init %s",strerror(rtn)), exit(1);
+    }
+
+    int rtnArchivo;
+
+	mArchivo =(pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+
+	if (rtnArchivo = pthread_mutexattr_init(&matrArchivo))
+    {
+        fprintf(stderr,"pthreas_mutexattr_init: %s",strerror(rtnArchivo)),exit(1);
+    }
+    if (rtnArchivo = pthread_mutexattr_setpshared(&matrArchivo,PTHREAD_PROCESS_SHARED))
+    {
+        fprintf(stderr,"pthread_mutexattr_setpshared %s",strerror(rtnArchivo)),exit(1);
+    }
+
+    if (rtnArchivo = pthread_mutex_init(mArchivo, &matrArchivo))
+    {
+        fprintf(stderr,"pthread_mutex_init %s",strerror(rtnArchivo)), exit(1);
     }
 
 	archivo = shmat(shmid, NULL,0);

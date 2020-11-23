@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pthread.h> 
 #include <time.h>
+#include <limits.h>
 
 typedef struct message
 {
@@ -22,6 +23,10 @@ typedef struct shm_content
       int cant_writers;
       int cant_readers;
       int cant_readersEgoista;
+      pid_t pid_writer;
+      pid_t pid_reader;
+      pid_t pid_readerEgoista;
+      char cwd[PATH_MAX];
 }shm_content;
 
 pthread_mutex_t    *mptr; //Mutex Pointer
@@ -71,6 +76,17 @@ int main(){
     int tamano = messageSize*nLineas;
     pMutex->cant_lineas = nLineas;
     pMutex->contador_egoista = 0;
+    getcwd(pMutex->cwd, sizeof(pMutex->cwd));
+
+    strncat(pMutex->cwd, "/bitacora.txt", 13);
+
+    printf("%s\n", pMutex->cwd);
+
+    FILE *fptr;
+    fptr = fopen(pMutex->cwd,"w");
+   	fclose(fptr);
+
+
     key = 4321; 
     system("ipcrm -M 4321");
     system("ipcrm -M 8745");
