@@ -149,24 +149,24 @@ int main(){
 	keyEstadoWriters=8745;
 	int arrayEstadoWriters[nEscritores];
 	if ((shmidEstadoWriters = shmget(keyEstadoWriters, sizeof(arrayEstadoWriters), 0666)) < 0) {
-		perror("shmget");
-		exit(1);
+		printf("%s\n\n", "No hay writers");
+		//exit(1);
 	}
 	estadoWriters = shmat(shmidEstadoWriters, NULL,0);
 	//Array de estados Readers----------------------------------------------------------------
 	keyEstadoLectores=4587;
 	int arrayEstadoLectores[nLectores];
 	if ((shmidEstadoLectores = shmget(keyEstadoLectores, sizeof(arrayEstadoLectores), 0666)) < 0) {
-		perror("shmget");
-		exit(1);
+		printf("%s\n\n", "No hay readers");
+		//exit(1);
 	}
 	estadoLectores = shmat(shmidEstadoLectores, NULL,0);
 	//Array de estados Readers----------------------------------------------------------------
 	keyEstadoEgoistas=7854;
 	int arrayEstadoEgoistas[nEgoistas];
 	if ((shmidEstadoEgoistas = shmget(keyEstadoEgoistas, sizeof(arrayEstadoEgoistas), 0666)) < 0) {
-		perror("shmget");
-		exit(1);
+		printf("%s\n\n", "No hay readers egoistas");
+		//exit(1);
 	}
 	estadoEgoistas = shmat(shmidEstadoEgoistas, NULL,0);
 	leerArchivo();
