@@ -76,11 +76,8 @@ void *leer(void *vargp){
 		if(i!=cant_lineas){
 			sleep(leyendo);
 			time_t hora = time(0);
-			printf("Proceso Reader\n");
-			printf("PID del proceso: %d\n", *pid);
-			printf("Hora en que leyo: %s", ctime(&(hora)));
-			printf("Mensaje que leyo:\n");
-			printf("PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
+			printf("Proceso Reader\nPID del proceso: %d\nHora en que leyo: %sMensaje que leyo:\nPID: %d\nFecha y Hora: %sLinea: %d\n\n", 
+				*pid,ctime(&hora),pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
 			fflush(stdout);	
 			
 			pthread_mutex_lock(mArchivo);
