@@ -45,7 +45,6 @@ int main(){
     scanf("%d", &nLineas);
 
 	keyMutex = 5678; 
-	system("ipcrm -M 5678");
 	// Create the segment.
 	if ((shmidMutex = shmget(keyMutex, sizeof(shm_content), IPC_CREAT | 0666)) < 0) {
 		perror("shmget");
@@ -79,8 +78,6 @@ int main(){
     getcwd(pMutex->cwd, sizeof(pMutex->cwd));
 
     strncat(pMutex->cwd, "/bitacora.txt", 13);
-
-    printf("%s\n", pMutex->cwd);
 
     FILE *fptr;
     fptr = fopen(pMutex->cwd,"w");
