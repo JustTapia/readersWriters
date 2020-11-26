@@ -58,18 +58,18 @@ void *leerEgoista(void *vargp){
 	while(1){
 		estados[*(pid)-1]=0;
 		pthread_mutex_lock(mptr);
-		*cont_egoista++;
+		*cont_egoista= *cont_egoista+1;
 		if(*cont_egoista <= 3){
+			printf("Contador de procesos egoístas seguidos: %d\n", *cont_egoista);
 			estados[*(pid)-1]=1;
 			int linea = rand() % cant_lineas;
 			message *pMensaje = (archivo+(linea*messageSize));
-
 			if(pMensaje->pid!=0){
-
 				sleep(leyendo);
 				time_t hora = time(0);
 				printf("Proceso Reader Egoista\n");
 				printf("PID del proceso: %d\n", *pid);
+				
 				printf("Hora en que leyo: %s", ctime(&(hora)));
 				printf("Mensaje que leyo:\n");
 				printf("PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
@@ -90,7 +90,8 @@ void *leerEgoista(void *vargp){
 			}else{
 				printf("Proceso Reader Egoista\n");
 				printf("PID del proceso: %d\n", *pid);
-				printf("Turno perdido, linea al azar vacía :(\n\n");
+				printf("Turno perdido, linea al azar vacía :(\n");
+				printf("\n");
 
 				fptr = fopen(cwd,"a");
 				fprintf(fptr,"%s", "Proceso Reader Egoista\n");
