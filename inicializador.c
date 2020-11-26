@@ -77,7 +77,7 @@ int main(){
     pMutex->contador_egoista = 0;
     getcwd(pMutex->cwd, sizeof(pMutex->cwd));
 
-    strncat(pMutex->cwd, "/bitacora.txt", 13);
+    strcat(pMutex->cwd, "/bitacora.txt");
 
     FILE *fptr;
     fptr = fopen(pMutex->cwd,"w");
