@@ -99,7 +99,7 @@ void leerEstadoLectores(){
 
 void leerEstadoEgoistas(){
 	printf("Estado Readers Egoistas:\n");
-	for(int i = 0; i < nLectores; i++){
+	for(int i = 0; i < nEgoistas; i++){
 		printf("PID: %d\t",i+1);
 		int estado = estadoEgoistas[i];
 		switch (estado){
