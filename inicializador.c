@@ -88,10 +88,6 @@ int main(){
 
 
     key = 4321; 
-    system("ipcrm -M 4321");
-    system("ipcrm -M 8745");
-    system("ipcrm -M 4587");
-    system("ipcrm -M 7854");
 	// Create the segment.
 	if ((shmid = shmget(key, tamano, IPC_CREAT|0666)) < 0) {
 		perror("shmget");
