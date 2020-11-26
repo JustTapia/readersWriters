@@ -90,7 +90,7 @@ void *leerEgoista(void *vargp){
 			}else{
 				printf("Proceso Reader Egoista\n");
 				printf("PID del proceso: %d\n", *pid);
-				printf("Turno perdido, linea al azar vacía :(\n");
+				printf("Turno perdido, linea al azar vacía :(\n\n");
 
 				fptr = fopen(cwd,"a");
 				fprintf(fptr,"%s", "Proceso Reader Egoista\n");
