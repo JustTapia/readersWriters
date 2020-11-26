@@ -102,14 +102,14 @@ int main(){
 
 	messageSize = sizeof(message);
 
-	printf("Digite la cantidad de escritores");
+	printf("Digite la cantidad de escritores: ");
     scanf("%d", &nEscritores);
 
-    printf("Digite el tiempo que duraran escribiendo");
+    printf("Digite el tiempo que duraran escribiendo: ");
     scanf("%d", &tiempoEscribiendo);
     escribiendo = tiempoEscribiendo;
 
-    printf("Digite el tiempo que dormiran");
+    printf("Digite el tiempo que dormiran: ");
     scanf("%d", &tiempoDurmiendo);
     durmiendo = tiempoDurmiendo;
 

@@ -124,14 +124,14 @@ int main(){
 
 	messageSize = sizeof(message);
 
-	printf("Digite la cantidad de lectores");
+	printf("Digite la cantidad de lectores: ");
     scanf("%d", &nLectores);
 
-    printf("Digite el tiempo que duraran leyendo");
+    printf("Digite el tiempo que duraran leyendo: ");
     scanf("%d", &tiempoLeyendo);
     leyendo = tiempoLeyendo;
 
-    printf("Digite el tiempo que dormiran");
+    printf("Digite el tiempo que dormiran: ");
     scanf("%d", &tiempoDurmiendo);
     durmiendo = tiempoDurmiendo;
 
