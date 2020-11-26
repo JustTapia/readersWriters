@@ -43,6 +43,7 @@ struct shm_content *pMutex;
 
 void leerArchivo(){
 	message *pMensaje;
+	printf("Archivo:\n");
 	for(int i; i < cant_lineas;i++){
 		pMensaje = (archivo+(i*messageSize));
 		if(pMensaje->fechaHora==0){
@@ -52,7 +53,6 @@ void leerArchivo(){
 		}
 		printf("--------------------------------------------------------\n");
 	}
-	printf("Archivo:\n");
 }
 
 
