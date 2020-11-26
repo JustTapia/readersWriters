@@ -47,10 +47,6 @@ int main(){
 	pid_writer = pMutex->pid_writer;
 	pid_reader = pMutex->pid_reader;
 	pid_readerEgoista = pMutex->pid_readerEgoista;
-	printf("%d\n", pid_writer);
-	printf("%d\n", pid_reader);
-	printf("%d\n", pid_readerEgoista);
-	fflush(stdout);
 
 	/*sprintf(pid_w, "%d", pid_writer);
 	sprintf(pid_r, "%d", pid_reader);
@@ -88,12 +84,13 @@ int main(){
 		//kill(pid_readerEgoista, SIGTERM);
 		kill(pid_readerEgoista, SIGKILL);
 	}
-
+	printf("Procesos Terminados\n");
 
 	system("ipcrm -M 5678");
 	system("ipcrm -M 4321");
     system("ipcrm -M 8745");
     system("ipcrm -M 4587");
     system("ipcrm -M 7854");
+    printf("Archivo Eliminado\n");
     
 }

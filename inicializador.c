@@ -95,7 +95,7 @@ int main(){
 	if(pInicio== (void *)-1){ 
 		perror("shmat");
 		exit(1);}
-	
+	printf("Ambiente inicializado\n");
 	/*
 	int i = 0;
 	while(i < nLineas){
