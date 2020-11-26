@@ -71,8 +71,8 @@ void *leerEgoista(void *vargp){
 				printf("Proceso Reader Egoista\n");
 				printf("PID del proceso: %d\n", *pid);
 				printf("Hora en que leyo: %s", ctime(&(hora)));
-				printf("Mensaje:\n");
-				printf(" PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
+				printf("Mensaje que leyo:\n");
+				printf("PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
 				fflush(stdout);
 
 				fptr = fopen(cwd,"a");
