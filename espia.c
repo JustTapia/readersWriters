@@ -41,7 +41,7 @@ int *estadoEgoistas;
 struct shm_content *pMutex;
 
 
-void leerArchivo(){
+void leerArchivo(){//Pasa por cada linea del archivo y las lee
 	message *pMensaje;
 	printf("Archivo:\n");
 	for(int i; i < cant_lineas;i++){
@@ -57,7 +57,7 @@ void leerArchivo(){
 
 
 
-void leerEstadoWriters(){
+void leerEstadoWriters(){//Lee el estado de cada writer
 	printf("Estado Writers:\n");
 	for(int i = 0; i < nEscritores; i++){
 		printf("PID: %d\t",i+1);
@@ -77,7 +77,7 @@ void leerEstadoWriters(){
 	}
 }
 
-void leerEstadoLectores(){
+void leerEstadoLectores(){//Lee el estado de cada reader
 	printf("Estado Readers:\n");
 	for(int i = 0; i < nLectores; i++){
 		printf("PID: %d\t",i+1);
@@ -97,7 +97,7 @@ void leerEstadoLectores(){
 	}
 }
 
-void leerEstadoEgoistas(){
+void leerEstadoEgoistas(){//Lee el estado de cada reader egoista
 	printf("Estado Readers Egoistas:\n");
 	for(int i = 0; i < nEgoistas; i++){
 		printf("PID: %d\t",i+1);
@@ -125,17 +125,22 @@ int main(){
 	messageSize = sizeof(message);
 	keyMutex = 5678; 
 
+
+	//Obtiene los mutex y los datos de control de los lectores y escritores
 	if ((shmidMutex = shmget(keyMutex, sizeof(shm_content), 0666)) < 0) {
 		perror("shmget");
 		exit(1);
 	}
 
 	pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
+
+	//Obtiene la cantidad de lo que tiene que leer
 	cant_lineas = pMutex->cant_lineas;
 	nEscritores = pMutex->cant_writers;
 	nLectores = pMutex->cant_readers;
 	nEgoistas = pMutex->cant_readersEgoista;
 
+	//Obtiene el archivo-----------------------------------------------------------
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
 	if ((shmid = shmget(key, tamano, 0666)) < 0) {
@@ -161,7 +166,7 @@ int main(){
 		//exit(1);
 	}
 	estadoLectores = shmat(shmidEstadoLectores, NULL,0);
-	//Array de estados Readers----------------------------------------------------------------
+	//Array de estados Readers Egoistas----------------------------------------------------------------
 	keyEstadoEgoistas=7854;
 	int arrayEstadoEgoistas[nEgoistas];
 	if ((shmidEstadoEgoistas = shmget(keyEstadoEgoistas, sizeof(arrayEstadoEgoistas), 0666)) < 0) {

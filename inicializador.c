@@ -45,18 +45,18 @@ int main(){
     scanf("%d", &nLineas);
 
 	keyMutex = 5678; 
-	// Create the segment.
+	// Crear la estructura de control.
 	if ((shmidMutex = shmget(keyMutex, sizeof(shm_content), IPC_CREAT | 0666)) < 0) {
 		perror("shmget");
 		exit(1);
 	}
 
-	// Now we attach the segment to our data space.
+
 	shm_content *pMutex = (shm_content*) shmat(shmidMutex, 0, 0);
 
+	//Crea el mutex---------------------------------------------------------
 	mptr = &(pMutex->mutex);
 
-    // Setup Mutex
     if (rtn = pthread_mutexattr_init(&matr))
     {
         fprintf(stderr,"pthreas_mutexattr_init: %s",strerror(rtn)),exit(1);
@@ -75,17 +75,17 @@ int main(){
     int tamano = messageSize*nLineas;
     pMutex->cant_lineas = nLineas;
     pMutex->contador_egoista = 0;
-    getcwd(pMutex->cwd, sizeof(pMutex->cwd));
+    getcwd(pMutex->cwd, sizeof(pMutex->cwd));//Obtiene el Path actual
 
-    strcat(pMutex->cwd, "/bitacora.txt");
+    strcat(pMutex->cwd, "/bitacora.txt");//Le anade el nombre de la bitacora
 
     FILE *fptr;
     fptr = fopen(pMutex->cwd,"w");
-   	fclose(fptr);
+   	fclose(fptr);//Reinicia el archivo de la bitacora
 
 
     key = 4321; 
-	// Create the segment.
+	// Crea el archivo
 	if ((shmid = shmget(key, tamano, IPC_CREAT|0666)) < 0) {
 		perror("shmget");
 		exit(1);

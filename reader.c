@@ -16,7 +16,7 @@ typedef struct message
       int linea;
 } message;
 
-typedef struct shm_content
+typedef struct shm_content//Esta es la estructura rprincipal de control, li
 {
       pthread_mutex_t   mutex;
       int cant_lineas;
@@ -39,7 +39,7 @@ pthread_mutexattr_t matrArchivo;
 pthread_mutex_t    *mptr; 
 
 int messageSize;
-int readcount = 0;
+int readcount = 0;//Para permitir que varios reders pasen y vigilar cuando terminan todos
 int cant_lineas;
 int durmiendo;
 int leyendo;
@@ -56,19 +56,19 @@ void *leer(void *vargp){
 	int i = 0;
 
 	while(1){
-		estados[*(pid)-1] = 0;
-		pthread_mutex_lock(mlector);
+		estados[*(pid)-1] = 0;//Estado Bloqueado
+		pthread_mutex_lock(mlector);//Mutex para la variable de control
 
 		readcount++;
-		if(readcount==1){
-			pthread_mutex_lock(mptr);
+		if(readcount==1){//Si entra el primer reader
+			pthread_mutex_lock(mptr);//Mutex universal
 			pMutex->contador_egoista = 0;
 		}
 		pthread_mutex_unlock(mlector);
-		estados[*(pid)-1] = 1;
+		estados[*(pid)-1] = 1;//Estado leyendo
 
 		message *pMensaje;
-		while(i<cant_lineas){
+		while(i<cant_lineas){//Busca el siguiente mensaje a leer
 			pMensaje = (archivo+(i*messageSize));
 			if(pMensaje->pid!=0) break;
 			i++;
@@ -78,9 +78,9 @@ void *leer(void *vargp){
 			time_t hora = time(0);
 			printf("Proceso Reader\nPID del proceso: %d\nHora en que leyo: %sMensaje que leyo:\nPID: %d\nFecha y Hora: %sLinea: %d\n\n", 
 				*pid,ctime(&hora),pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
-			fflush(stdout);	
+			fflush(stdout);//Lee el mensaje
 			
-			pthread_mutex_lock(mArchivo);
+			pthread_mutex_lock(mArchivo);//Escribe en el archivo
 
 			fptr = fopen(cwd,"a");
 			fprintf(fptr, "Proceso Reader\n");
@@ -91,29 +91,29 @@ void *leer(void *vargp){
 			fprintf(fptr, "\n");
    			fclose(fptr);
 
-			pthread_mutex_unlock(mArchivo);
+			pthread_mutex_unlock(mArchivo);//Libera el archivo
 
 		}
-		pthread_mutex_lock(mlector);
+		pthread_mutex_lock(mlector);//Mutex para la variable de control
 		readcount--;
 		if(readcount==0){
-			pthread_mutex_unlock(mptr);
+			pthread_mutex_unlock(mptr);//Si sale el ultimo reader
 		}
 		pthread_mutex_unlock(mlector);
-		estados[*(pid)-1] = 2;
+		estados[*(pid)-1] = 2;//estado durmiendo
 		sleep(durmiendo);
 
 		i++;
 		if(i==cant_lineas){
 			i=0;
-		}
+		}//Reinicia las lineas si llegó al final del archivo
 	}
 
 }
 
 int main(){
-	int shmid, shmidMutex, shmidEstado;
-	key_t key, keyMutex, keyEstado;
+	int shmid, shmidMutex, shmidEstado;//Para el id de shmget
+	key_t key, keyMutex, keyEstado;//La llave para crear la memoria compartida
 	char *shm, *s;
 	int nLectores = 0;
 	int tiempoDurmiendo = 0;
@@ -139,18 +139,21 @@ int main(){
 		exit(1);
 	}
 	pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
-	mptr = &(pMutex->mutex);
-	cant_lineas = pMutex->cant_lineas;
-	pMutex->cant_readers = nLectores;
-	pMutex->pid_reader = getpid();
-	cwd = pMutex->cwd;
+	mptr = &(pMutex->mutex);//Get mutex
+	cant_lineas = pMutex->cant_lineas;//Get cantidad de lineas en el archivo
+	pMutex->cant_readers = nLectores;//Guarda la cantidad de lectores
+	pMutex->pid_reader = getpid();//Guarda el pid del proceso
+	cwd = pMutex->cwd;//Obtiene el path de la bitácora
 
+	//Get archivo-------------------------------------------------------------
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
 	if ((shmid = shmget(key, tamano, 0666)) < 0) {
 		perror("shmget");
 		exit(1);
 	}
+
+	//Crea mutex de control--------------------------------------------------
 
 	int rtn;
 
@@ -169,6 +172,8 @@ int main(){
     {
         fprintf(stderr,"pthread_mutex_init %s",strerror(rtn)), exit(1);
     }
+
+    //Crea mutex del archivo---------------------------------------------------------
 
     int rtnArchivo;
 
