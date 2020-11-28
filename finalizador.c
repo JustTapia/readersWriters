@@ -30,9 +30,6 @@ int main(){
 	int shmid, shmidMutex, shmidEstado;
 	pid_t pid_writer, pid_reader, pid_readerEgoista;
 	key_t key, keyMutex, keyEstado;
-	char pid_w[4];
-	char pid_r[4];
-	char pid_e[4];
 
 	keyMutex = 5678; 
 
@@ -41,56 +38,35 @@ int main(){
 		exit(1);
 	}
 
-	struct shm_content *pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
+	struct shm_content *pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0); //memoria compartida del mutex
 	
 
-	pid_writer = pMutex->pid_writer;
-	pid_reader = pMutex->pid_reader;
-	pid_readerEgoista = pMutex->pid_readerEgoista;
-
-	/*sprintf(pid_w, "%d", pid_writer);
-	sprintf(pid_r, "%d", pid_reader);
-	sprintf(pid_e, "%d", pid_readerEgoista);
-
-	char kill_writer[12] = "kill -9 ";
-	char kill_reader[12] = "kill -9 ";
-	char kill_readerEgoista[12] = "kill -9 ";
+	pid_writer = pMutex->pid_writer; //pid del proceso de los writers
+	pid_reader = pMutex->pid_reader; //pid del proceso de los readers
+	pid_readerEgoista = pMutex->pid_readerEgoista; //pid del proceso de los reader egoistas
 
 
-	strncat(kill_writer, pid_w, 4);
-	printf("%s\n", kill_writer);
-	fflush(stdout);
-	strncat(kill_reader, pid_r, 4);
-	printf("%s\n", kill_reader);
-	fflush(stdout);
-	strncat(kill_readerEgoista, pid_e, 4);
-	printf("%s\n", kill_readerEgoista);
-	fflush(stdout);*/
-
-	if(pid_writer!=0){
-		//system(kill_writer);
+	if(pid_writer!=0){ //si se ejecutaron los writers
 		//kill(pid_writer, SIGTERM);
 		kill(pid_writer, SIGKILL);
 	}
 	
-	if(pid_reader!=0){
-		//system(kill_reader);
+	if(pid_reader!=0){ //si se ejecutaron los readers
 		//kill(pid_reader, SIGTERM);
 		kill(pid_reader, SIGKILL);
 	}
 
-	if(pid_readerEgoista!=0){
-		//system(kill_readerEgoista);
+	if(pid_readerEgoista!=0){ //si se ejecutaron los egoistas
 		//kill(pid_readerEgoista, SIGTERM);
 		kill(pid_readerEgoista, SIGKILL);
 	}
 	printf("Procesos Terminados\n");
 
-	system("ipcrm -M 5678");
-	system("ipcrm -M 4321");
-    system("ipcrm -M 8745");
-    system("ipcrm -M 4587");
-    system("ipcrm -M 7854");
+	system("ipcrm -M 5678"); //eliminar memoria compartida mutex
+	system("ipcrm -M 4321"); //eliminar memoria compartida archivo
+    system("ipcrm -M 8745"); //eliminar memoria compartida estados de writers
+    system("ipcrm -M 4587"); //eliminar memoria compartida estados de readers
+    system("ipcrm -M 7854"); //eliminar memoria compartida estados de egoistas
     printf("Archivo Eliminado\n");
     
 }

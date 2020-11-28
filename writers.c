@@ -46,24 +46,29 @@ void *escribir(void *vargp){
 
 	int *pid = (int *)vargp;
 	message mensaje;
+	
 	while(1){
-		estados[*(pid)-1] = 0;
+
+		estados[*(pid)-1] = 0; //estado bloqueado
 		pthread_mutex_lock(mptr);
-		estados[*(pid)-1] = 1;
-		pMutex->contador_egoista = 0;
+		estados[*(pid)-1] = 1; //estado ejecutando
+		pMutex->contador_egoista = 0; //reiniciar contador egoistas consecutivos
 
 		int i = 0;
 		message *pMensaje;
-		while(i<cant_lineas){
+		while(i<cant_lineas){ //busca linea vacia para escribir
 			pMensaje = (archivo+(i*messageSize));
 			if(pMensaje->pid==0) break;
 			i++;
 		}
 		if(i!=cant_lineas){
 			sleep(escribiendo);
+			
 			pMensaje->pid = *pid;
 			pMensaje->fechaHora = time(0);
 			pMensaje->linea = i;
+
+			//Imprimir accion en consola
 			printf("Proceso Writer\n");
 			printf("Mensaje que escribio:\n");
 			printf("PID: %d\n", pMensaje->pid);
@@ -72,6 +77,7 @@ void *escribir(void *vargp){
 			printf("\n");
 			fflush(stdout);
 
+			//Escribir accion en bitacora
 			fptr = fopen(cwd,"a");
 			fprintf(fptr,"%s", "Proceso Writer\n");
 			fprintf(fptr, "Mensaje que escribio:\n");
@@ -82,10 +88,13 @@ void *escribir(void *vargp){
    			fclose(fptr);
 
 			pthread_mutex_unlock(mptr);
-			estados[*(pid)-1] = 2;
+
+			estados[*(pid)-1] = 2; //estado durmiendo
 			sleep(durmiendo);
 		}else{
 			pthread_mutex_unlock(mptr);
+
+			estados[*(pid)-1] = 2; //estado durmiendo
 			sleep(durmiendo);
 		} 
 	}
@@ -113,19 +122,22 @@ int main(){
     scanf("%d", &tiempoDurmiendo);
     durmiendo = tiempoDurmiendo;
 
-	keyMutex = 5678; 
 
+    //Get Struct del Mutex----------------------------------------------------------
+	keyMutex = 5678; 
 	if ((shmidMutex = shmget(keyMutex, sizeof(shm_content), 0666)) < 0) {
 		perror("shmget");
 		exit(1);
 	}
 	pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
-	mptr = &(pMutex->mutex);
-	cant_lineas = pMutex->cant_lineas;
-	pMutex->cant_writers = nEscritores;
-	pMutex->pid_writer = getpid();
-	cwd = pMutex->cwd;
+	mptr = &(pMutex->mutex); //get mutex
+	cant_lineas = pMutex->cant_lineas; //get cantidad de lineas del archivo
+	pMutex->cant_writers = nEscritores; //asignar cantidad de writers
+	pMutex->pid_writer = getpid(); //asignar pid del proceso principal de los writers
+	cwd = pMutex->cwd; //get path actual
 
+
+	//Get Archivo------------------------------------------------------------------
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
 	if ((shmid = shmget(key, tamano, 0666)) < 0) {
@@ -133,7 +145,7 @@ int main(){
 		exit(1);
 	}
 
-	archivo = shmat(shmid, NULL,0);
+	archivo = shmat(shmid, NULL,0); //primera linea del archivo
 
 
 	//Array de Estados-------------------------------------------------------------
@@ -144,7 +156,7 @@ int main(){
 		exit(1);
 	}
 
-	estados = shmat(shmidEstado, NULL,0);
+	estados = shmat(shmidEstado, NULL,0); 
 
 	//Llamada a threads escritores-------------------------------------------------
 	int i = 0;
@@ -157,21 +169,9 @@ int main(){
 	}
 
 	i=0;
-	while(i < nEscritores){
+	while(i < nEscritores){ //esperar a que terminen los threads
 		pthread_join(thread_id[i], NULL);
 		i++;
 	}
-
-	/*i = 0;
-	char MY_TIME[50];
-
-	while(i < cant_lineas){
-		message *pValor = (archivo+(i*messageSize));
-		printf(" PID: %d\n", pValor->pid);
-		printf("Fecha y Hora: %s", asctime(gmtime(&(pValor->fechaHora))));
-		printf("Linea: %d\n", pValor->linea);
-		printf("\n");
-		i++;
-	}*/
 
 }

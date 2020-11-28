@@ -32,9 +32,6 @@ typedef struct shm_content
 }shm_content;
 
 
-pthread_mutex_t    *mlector;
-pthread_mutexattr_t matr;
-
 pthread_mutex_t    *mptr; 
 
 int messageSize;
@@ -56,25 +53,30 @@ void *leerEgoista(void *vargp){
 	int i = 0;
 
 	while(1){
-		estados[*(pid)-1]=0;
+		estados[*(pid)-1]=0; //estado bloqueado
 		pthread_mutex_lock(mptr);
-		*cont_egoista= *cont_egoista+1;
-		if(*cont_egoista <= 3){
+		*cont_egoista= *cont_egoista+1; //aumentar contador de egoistas consecutivos
+
+		if(*cont_egoista <= 3){	
 			printf("Contador de procesos egoístas seguidos: %d\n", *cont_egoista);
-			estados[*(pid)-1]=1;
-			int linea = rand() % cant_lineas;
+			estados[*(pid)-1]=1; //estado ejecutando
+
+			int linea = rand() % cant_lineas; 
 			message *pMensaje = (archivo+(linea*messageSize));
 			if(pMensaje->pid!=0){
 				sleep(leyendo);
 				time_t hora = time(0);
+
+				//Imprimir accion en consola
 				printf("Proceso Reader Egoista\n");
 				printf("PID del proceso: %d\n", *pid);
-				
 				printf("Hora en que leyo: %s", ctime(&(hora)));
 				printf("Mensaje que leyo:\n");
 				printf("PID: %d\nFecha y Hora: %sLinea: %d\n\n", pMensaje->pid,asctime(gmtime(&(pMensaje->fechaHora))),pMensaje->linea);
 				fflush(stdout);
 
+
+				//Escribir accion en bitacora
 				fptr = fopen(cwd,"a");
 				fprintf(fptr,"%s", "Proceso Reader Egoista\n");
 				fprintf(fptr,"PID del proceso: %d\n", *pid);
@@ -84,15 +86,20 @@ void *leerEgoista(void *vargp){
 				fprintf(fptr, "\n");
    				fclose(fptr);
 
+   				//Borrar linea
 				pMensaje->pid = 0;
 				pMensaje->fechaHora = 0;
 				pMensaje->linea = 0;
 			}else{
+				//Linea al azar vacia--------------
+
+				//Imprimir accion en consola
 				printf("Proceso Reader Egoista\n");
 				printf("PID del proceso: %d\n", *pid);
 				printf("Turno perdido, linea al azar vacía :(\n");
 				printf("\n");
 
+				//Escribir accion en bitacora
 				fptr = fopen(cwd,"a");
 				fprintf(fptr,"%s", "Proceso Reader Egoista\n");
 				fprintf(fptr,"PID del proceso: %d\n", *pid);
@@ -101,11 +108,11 @@ void *leerEgoista(void *vargp){
    				fclose(fptr);
 
 			}
-
 		}
-
+		
 		pthread_mutex_unlock(mptr);
-		estados[*(pid)-1]=2;
+
+		estados[*(pid)-1]=2; //estado durmiendo
 		sleep(durmiendo);
 	}
 
@@ -134,20 +141,22 @@ int main(){
     scanf("%d", &tiempoDurmiendo);
     durmiendo = tiempoDurmiendo;
 
+    //Get Struct del Mutex----------------------------------------------------------
 	keyMutex = 5678; 
-
 	if ((shmidMutex = shmget(keyMutex, sizeof(shm_content), 0666)) < 0) {
 		perror("shmget");
 		exit(1);
 	}
 	struct shm_content *pMutex = (struct shm_content*) shmat(shmidMutex, 0, 0);
-	mptr = &(pMutex->mutex);
-	cant_lineas = pMutex->cant_lineas;
-	cont_egoista = &(pMutex->contador_egoista);
-	pMutex->cant_readersEgoista = nLectores;
-	pMutex->pid_readerEgoista = getpid();
-	cwd = pMutex->cwd;
+	mptr = &(pMutex->mutex); //get mutex
+	cant_lineas = pMutex->cant_lineas; //get cantidad de lineas del archivo
+	cont_egoista = &(pMutex->contador_egoista); //get contador de readers egoistas
+	pMutex->cant_readersEgoista = nLectores; //asignar cantidad de readers egoistas
+	pMutex->pid_readerEgoista = getpid(); //asignar el pid del proceso principal de los egoistas
+	cwd = pMutex->cwd; //get path actual
 
+
+	//Get Archivo------------------------------------------------------------------
 	int tamano = messageSize*cant_lineas;
 	key = 4321; 
 	if ((shmid = shmget(key, tamano, 0666)) < 0) {
@@ -155,28 +164,10 @@ int main(){
 		exit(1);
 	}
 
-	int rtn;
 
-	mlector =(pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+	archivo = shmat(shmid, NULL,0); //primera linea del archivo
 
-	if (rtn = pthread_mutexattr_init(&matr))
-    {
-        fprintf(stderr,"pthreas_mutexattr_init: %s",strerror(rtn)),exit(1);
-    }
-    if (rtn = pthread_mutexattr_setpshared(&matr,PTHREAD_PROCESS_SHARED))
-    {
-        fprintf(stderr,"pthread_mutexattr_setpshared %s",strerror(rtn)),exit(1);
-    }
-
-    if (rtn = pthread_mutex_init(mlector, &matr))
-    {
-        fprintf(stderr,"pthread_mutex_init %s",strerror(rtn)), exit(1);
-    }
-
-
-
-	archivo = shmat(shmid, NULL,0);
-
+	//Array de Estados-------------------------------------------------------------
 	keyEstado=7854;
 	int arrayEstados[nLectores];
 	if ((shmidEstado = shmget(keyEstado, sizeof(arrayEstados), IPC_CREAT | 0666)) < 0) {
@@ -187,6 +178,7 @@ int main(){
 	estados = shmat(shmidEstado, NULL,0);
 
 
+	//Llamada a threads egoistas-------------------------------------------------
 	int i = 0;
 	pthread_t thread_id[nLectores]; 
 	while(i < nLectores){
@@ -197,22 +189,11 @@ int main(){
 	}
 
 	i=0;
-	while(i < nLectores){
+	while(i < nLectores){ //esperar a que terminen los threads
 		pthread_join(thread_id[i], NULL);
 		i++;
 	}
 
-	i = 0;
-	char MY_TIME[50];
-
-	/*while(i < cant_lineas){
-		message *pValor = (archivo+(i*messageSize));
-		printf(" PID: %d\n", pValor->pid);
-		printf("Fecha y Hora: %s", asctime(gmtime(&(pValor->fechaHora))));
-		printf("Linea: %d\n", pValor->linea);
-		printf("\n");
-		i++;
-	}*/
 
 }
 
