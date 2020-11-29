@@ -134,7 +134,7 @@ int main(){
 	cant_lineas = pMutex->cant_lineas; //get cantidad de lineas del archivo
 	pMutex->cant_writers = nEscritores; //asignar cantidad de writers
 	pMutex->pid_writer = getpid(); //asignar pid del proceso principal de los writers
-	cwd = pMutex->cwd; //get path actual
+	cwd = pMutex->cwd; //get path de la bitacora
 
 
 	//Get Archivo------------------------------------------------------------------

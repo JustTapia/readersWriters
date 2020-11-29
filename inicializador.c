@@ -44,6 +44,7 @@ int main(){
 	printf("Digite la cantidad de lineas del archivo: ");
     scanf("%d", &nLineas);
 
+    //Memoria compartida del mutex------------------------------------------
 	keyMutex = 5678; 
 	// Crear la estructura de control.
 	if ((shmidMutex = shmget(keyMutex, sizeof(shm_content), IPC_CREAT | 0666)) < 0) {
@@ -77,13 +78,13 @@ int main(){
     pMutex->contador_egoista = 0;
     getcwd(pMutex->cwd, sizeof(pMutex->cwd));//Obtiene el Path actual
 
-    strcat(pMutex->cwd, "/bitacora.txt");//Le anade el nombre de la bitacora
+    strcat(pMutex->cwd, "/bitacora.txt");//Le anade el nombre de la bitacora al path actual
 
     FILE *fptr;
     fptr = fopen(pMutex->cwd,"w");
    	fclose(fptr);//Reinicia el archivo de la bitacora
 
-
+   	//Memoria Compartida del archivo------------------------------------------
     key = 4321; 
 	// Crea el archivo
 	if ((shmid = shmget(key, tamano, IPC_CREAT|0666)) < 0) {
@@ -94,21 +95,8 @@ int main(){
 	void *pInicio = shmat(shmid, NULL,0);
 	if(pInicio== (void *)-1){ 
 		perror("shmat");
-		exit(1);}
-	printf("Ambiente inicializado\n");
-	/*
-	int i = 0;
-	while(i < nLineas){
-		message *pValor = (pInicio+(i*messageSize));
-		pValor->pid = i;	
-		i++;
+		exit(1);
 	}
-
-	i = 0;	
-	while(i < nLineas){
-		message *pValor = (pInicio+(i*messageSize));
-		printf("%d\n", pValor->pid);
-		i++;
-	}*/
+	printf("Ambiente inicializado\n");
 
 }

@@ -158,6 +158,7 @@ int main(){
 		//exit(1);
 	}
 	estadoWriters = shmat(shmidEstadoWriters, NULL,0);
+	
 	//Array de estados Readers----------------------------------------------------------------
 	keyEstadoLectores=4587;
 	int arrayEstadoLectores[nLectores];
@@ -166,6 +167,7 @@ int main(){
 		//exit(1);
 	}
 	estadoLectores = shmat(shmidEstadoLectores, NULL,0);
+	
 	//Array de estados Readers Egoistas----------------------------------------------------------------
 	keyEstadoEgoistas=7854;
 	int arrayEstadoEgoistas[nEgoistas];

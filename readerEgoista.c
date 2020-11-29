@@ -153,7 +153,7 @@ int main(){
 	cont_egoista = &(pMutex->contador_egoista); //get contador de readers egoistas
 	pMutex->cant_readersEgoista = nLectores; //asignar cantidad de readers egoistas
 	pMutex->pid_readerEgoista = getpid(); //asignar el pid del proceso principal de los egoistas
-	cwd = pMutex->cwd; //get path actual
+	cwd = pMutex->cwd; //get path de la bitacora
 
 
 	//Get Archivo------------------------------------------------------------------

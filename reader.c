@@ -16,7 +16,7 @@ typedef struct message
       int linea;
 } message;
 
-typedef struct shm_content//Esta es la estructura rprincipal de control, li
+typedef struct shm_content//Esta es la estructura principal de control
 {
       pthread_mutex_t   mutex;
       int cant_lineas;
@@ -132,8 +132,8 @@ int main(){
     scanf("%d", &tiempoDurmiendo);
     durmiendo = tiempoDurmiendo;
 
+    //Get mutex del archivo---------------------------------------------------
 	keyMutex = 5678; 
-
 	if ((shmidMutex = shmget(keyMutex, sizeof(shm_content), 0666)) < 0) {
 		perror("shmget");
 		exit(1);
@@ -142,7 +142,7 @@ int main(){
 	mptr = &(pMutex->mutex);//Get mutex
 	cant_lineas = pMutex->cant_lineas;//Get cantidad de lineas en el archivo
 	pMutex->cant_readers = nLectores;//Guarda la cantidad de lectores
-	pMutex->pid_reader = getpid();//Guarda el pid del proceso
+	pMutex->pid_reader = getpid();//Guarda el pid del proceso principal de los readers
 	cwd = pMutex->cwd;//Obtiene el path de la bitácora
 
 	//Get archivo-------------------------------------------------------------
@@ -153,8 +153,7 @@ int main(){
 		exit(1);
 	}
 
-	//Crea mutex de control--------------------------------------------------
-
+	//Crea mutex de los readers--------------------------------------------------
 	int rtn;
 
 	mlector =(pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
@@ -173,8 +172,7 @@ int main(){
         fprintf(stderr,"pthread_mutex_init %s",strerror(rtn)), exit(1);
     }
 
-    //Crea mutex del archivo---------------------------------------------------------
-
+    //Crea mutex para escribir en la bitacora------------------------------------------------------
     int rtnArchivo;
 
 	mArchivo =(pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
@@ -221,17 +219,5 @@ int main(){
 		pthread_join(thread_id[i], NULL);
 		i++;
 	}
-
-	/*i = 0;
-	char MY_TIME[50];
-
-	while(i < cant_lineas){
-		message *pValor = (archivo+(i*messageSize));
-		printf(" PID: %d\n", pValor->pid);
-		printf("Fecha y Hora: %s", asctime(gmtime(&(pValor->fechaHora))));
-		printf("Linea: %d\n", pValor->linea);
-		printf("\n");
-		i++;
-	}*/
 
 }
