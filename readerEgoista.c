@@ -106,14 +106,16 @@ void *leerEgoista(void *vargp){
 				fprintf(fptr, "Turno perdido, linea al azar vacía :(\n");
 				fprintf(fptr, "\n");
    				fclose(fptr);
-
 			}
+			pthread_mutex_unlock(mptr);
+
+			estados[*(pid)-1]=2; //estado durmiendo
+			sleep(durmiendo);
+		}else{
+			pthread_mutex_unlock(mptr);
 		}
 		
-		pthread_mutex_unlock(mptr);
-
-		estados[*(pid)-1]=2; //estado durmiendo
-		sleep(durmiendo);
+		
 	}
 
 }
